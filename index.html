@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تقارير المبيعات</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #f5f4f0;
+    --surface: #ffffff;
+    --surface2: #fafaf8;
+    --border: #e8e6e0;
+    --text: #1a1a18;
+    --muted: #6b6a66;
+    --accent: #1a6b3a;
+    --accent-bg: #e8f5ee;
+    --accent-light: #d0edda;
+    --danger: #c0392b;
+    --danger-bg: #fdf0ee;
+    --warning: #b8860b;
+    --warning-bg: #fef9e7;
+    --radius: 10px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141412;
+      --surface: #1e1e1b;
+      --surface2: #252521;
+      --border: #2e2e2a;
+      --text: #e8e6e0;
+      --muted: #888780;
+      --accent: #4caf70;
+      --accent-bg: #0f2d1a;
+      --accent-light: #1a3d25;
+      --danger: #e57373;
+      --danger-bg: #2d1212;
+      --warning: #ffd54f;
+      --warning-bg: #2d2400;
+    }
+  }
+
+  body {
+    font-family: -apple-system, 'Segoe UI', Tahoma, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+  }
+
+  /* ── LOGIN ── */
+  #loginScreen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+
+  .login-card {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: 16px;
+    padding: 2.5rem 2rem;
+    width: 100%;
+    max-width: 360px;
+    text-align: center;
+  }
+
+  .login-logo {
+    width: 52px;
+    height: 52px;
+    background: var(--accent);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.25rem;
+    font-size: 24px;
+  }
+
+  .login-card h1 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+  }
+
+  .login-card p {
+    color: var(--muted);
+    font-size: 13px;
+    margin-bottom: 1.75rem;
+  }
+
+  .field {
+    margin-bottom: 0.85rem;
+    text-align: right;
+  }
+
+  .field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    margin-bottom: 0.35rem;
+  }
+
+  .field input, .field select {
+    width: 100%;
+    padding: 0.65rem 0.85rem;
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface2);
+    color: var(--text);
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .field input:focus, .field select:focus {
+    border-color: var(--accent);
+  }
+
+  .btn-primary {
+    width: 100%;
+    padding: 0.75rem;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 0.5rem;
+    transition: opacity 0.15s;
+    font-family: inherit;
+  }
+
+  .btn-primary:hover { opacity: 0.9; }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .error-msg {
+    background: var(--danger-bg);
+    color: var(--danger);
+    padding: 0.65rem 0.85rem;
+    border-radius: var(--radius);
+    font-size: 13px;
+    margin-top: 0.75rem;
+    display: none;
+  }
+
+  /* ── APP ── */
+  #app { display: none; }
+
+  .topbar {
+    background: var(--surface);
+    border-bottom: 0.5px solid var(--border);
+    padding: 0.85rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .topbar-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    font-weight: 600;
+    font-size: 15px;
+  }
+
+  .topbar-brand .dot {
+    width: 8px;
+    height: 8px;
+    background: var(--accent);
+    border-radius: 50%;
+  }
+
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .user-badge {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .btn-logout {
+    font-size: 12px;
+    color: var(--muted);
+    background: none;
+    border: 0.5px solid var(--border);
+    border-radius: 6px;
+    padding: 0.3rem 0.65rem;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  .btn-logout:hover { color: var(--danger); border-color: var(--danger); }
+
+  .content { padding: 1.25rem; max-width: 1100px; margin: 0 auto; }
+
+  /* ── FILTER BAR ── */
+  .filter-bar {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.25rem;
+    display: flex;
+    gap: 0.85rem;
+    flex-wrap: wrap;
+    align-items: flex-end;
+  }
+
+  .filter-bar .field { margin: 0; flex: 1; min-width: 140px; }
+
+  .btn-filter {
+    padding: 0.65rem 1.25rem;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    white-space: nowrap;
+    align-self: flex-end;
+  }
+
+  .btn-filter:hover { opacity: 0.9; }
+
+  /* ── KPI CARDS ── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 0.85rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .kpi-card {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.25rem;
+  }
+
+  .kpi-label {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .kpi-value {
+    font-size: 26px;
+    font-weight: 600;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+  }
+
+  .kpi-sub {
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .kpi-card.accent { border-color: var(--accent-light); background: var(--accent-bg); }
+  .kpi-card.accent .kpi-value { color: var(--accent); }
+
+  /* ── SECTION ── */
+  .section {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 1.25rem;
+    overflow: hidden;
+  }
+
+  .section-header {
+    padding: 0.85rem 1.25rem;
+    border-bottom: 0.5px solid var(--border);
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  .section-header span { color: var(--muted); font-weight: 400; font-size: 12px; }
+
+  /* ── TABLE ── */
+  .tbl-wrap { overflow-x: auto; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  th {
+    padding: 0.65rem 1rem;
+    text-align: right;
+    font-weight: 500;
+    color: var(--muted);
+    font-size: 11px;
+    background: var(--surface2);
+    border-bottom: 0.5px solid var(--border);
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 0.65rem 1rem;
+    border-bottom: 0.5px solid var(--border);
+    vertical-align: middle;
+  }
+
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface2); }
+
+  .badge {
+    display: inline-block;
+    padding: 0.2rem 0.55rem;
+    border-radius: 5px;
+    font-size: 11px;
+    font-weight: 500;
+  }
+
+  .badge-cash { background: var(--accent-bg); color: var(--accent); }
+  .badge-visa { background: #e8f0fe; color: #1a56db; }
+  .badge-voda { background: #fce8e8; color: #c0392b; }
+  .badge-delivery { background: var(--warning-bg); color: var(--warning); }
+  .badge-takeaway { background: var(--accent-bg); color: var(--accent); }
+  .badge-dine { background: #f3e8ff; color: #7c3aed; }
+
+  /* ── CHARTS ── */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .chart-wrap { position: relative; height: 200px; padding: 1rem; }
+
+  /* ── BAR CHART (CSS) ── */
+  .bar-list { padding: 0.75rem 1.25rem 1rem; }
+
+  .bar-item {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    margin-bottom: 0.65rem;
+  }
+
+  .bar-label { font-size: 12px; min-width: 110px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bar-track { flex: 1; height: 8px; background: var(--bg); border-radius: 4px; overflow: hidden; }
+  .bar-fill { height: 100%; background: var(--accent); border-radius: 4px; transition: width 0.4s ease; }
+  .bar-val { font-size: 12px; font-weight: 500; min-width: 60px; text-align: left; color: var(--muted); }
+
+  /* ── PAYMENT DONUT (CSS) ── */
+  .pay-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.65rem;
+    padding: 1rem 1.25rem;
+  }
+
+  .pay-item {
+    background: var(--surface2);
+    border: 0.5px solid var(--border);
+    border-radius: 8px;
+    padding: 0.75rem;
+    text-align: center;
+  }
+
+  .pay-icon { font-size: 20px; margin-bottom: 0.35rem; }
+  .pay-val { font-size: 16px; font-weight: 600; }
+  .pay-name { font-size: 11px; color: var(--muted); margin-top: 0.2rem; }
+
+  /* ── LOADING / EMPTY ── */
+  .state-box {
+    padding: 3rem 1.25rem;
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .state-box .big { font-size: 32px; margin-bottom: 0.5rem; }
+
+  .spinner {
+    width: 24px; height: 24px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin: 0 auto 0.75rem;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── BRANCH TABS ── */
+  .branch-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+  }
+
+  .branch-tab {
+    padding: 0.4rem 0.85rem;
+    border: 0.5px solid var(--border);
+    border-radius: 6px;
+    font-size: 13px;
+    background: var(--surface);
+    color: var(--muted);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+
+  .branch-tab.active {
+    background: var(--accent-bg);
+    border-color: var(--accent-light);
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  /* ── SYNC STATUS ── */
+  .sync-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .sync-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+
+  @media (max-width: 600px) {
+    .content { padding: 0.85rem; }
+    .kpi-value { font-size: 20px; }
+    .filter-bar { flex-direction: column; }
+    .filter-bar .field { min-width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════ LOGIN ══════════════════ -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">📊</div>
+    <h1>تقارير المبيعات</h1>
+    <p>سجّل دخولك للمتابعة</p>
+
+    <div class="field">
+      <label>اسم المستخدم</label>
+      <input type="text" id="loginUser" placeholder="admin" autocomplete="username">
+    </div>
+    <div class="field">
+      <label>كلمة المرور</label>
+      <input type="password" id="loginPass" placeholder="••••••" autocomplete="current-password">
+    </div>
+
+    <button class="btn-primary" onclick="doLogin()" id="loginBtn">دخول</button>
+    <div class="error-msg" id="loginErr">اسم المستخدم أو كلمة المرور غير صحيحة</div>
+  </div>
+</div>
+
+<!-- ══════════════════ APP ══════════════════ -->
+<div id="app">
+  <div class="topbar">
+    <div class="topbar-brand">
+      <div class="dot"></div>
+      تقارير المبيعات
+    </div>
+    <div class="topbar-right">
+      <div class="user-badge" id="userBadge"></div>
+      <button class="btn-logout" onclick="doLogout()">خروج</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <div class="field">
+        <label>من تاريخ</label>
+        <input type="date" id="dateFrom">
+      </div>
+      <div class="field">
+        <label>إلى تاريخ</label>
+        <input type="date" id="dateTo">
+      </div>
+      <div class="field">
+        <label>فترة سريعة</label>
+        <select id="quickRange" onchange="applyQuickRange()">
+          <option value="">اختر...</option>
+          <option value="today">اليوم</option>
+          <option value="yesterday">أمس</option>
+          <option value="week">آخر 7 أيام</option>
+          <option value="month">هذا الشهر</option>
+          <option value="last30">آخر 30 يوم</option>
+        </select>
+      </div>
+      <button class="btn-filter" onclick="loadData()">🔍 عرض التقارير</button>
+    </div>
+
+    <!-- Branch Tabs -->
+    <div class="branch-tabs" id="branchTabs"></div>
+
+    <!-- KPI -->
+    <div class="kpi-grid" id="kpiGrid">
+      <div class="kpi-card accent">
+        <div class="kpi-label">💰 إجمالي المبيعات</div>
+        <div class="kpi-value" id="kpiTotal">—</div>
+        <div class="kpi-sub">جنيه مصري</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">🧾 عدد الفواتير</div>
+        <div class="kpi-value" id="kpiCount">—</div>
+        <div class="kpi-sub">فاتورة</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">📈 متوسط الفاتورة</div>
+        <div class="kpi-value" id="kpiAvg">—</div>
+        <div class="kpi-sub">جنيه</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">🎁 إجمالي الخصومات</div>
+        <div class="kpi-value" id="kpiDisc">—</div>
+        <div class="kpi-sub">جنيه</div>
+      </div>
+    </div>
+
+    <!-- Payment breakdown + Top items -->
+    <div class="charts-grid">
+      <div class="section">
+        <div class="section-header">طرق الدفع</div>
+        <div class="pay-grid" id="payGrid">
+          <div class="pay-item"><div class="pay-icon">💵</div><div class="pay-val" id="payCash">—</div><div class="pay-name">كاش</div></div>
+          <div class="pay-item"><div class="pay-icon">💳</div><div class="pay-val" id="payVisa">—</div><div class="pay-name">فيزا</div></div>
+          <div class="pay-item"><div class="pay-icon">📱</div><div class="pay-val" id="payVoda">—</div><div class="pay-name">فودافون</div></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">أنواع الأوردر</div>
+        <div class="bar-list" id="orderTypeChart">
+          <div class="state-box"><div class="spinner"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top Products -->
+    <div class="section" id="topProductsSection">
+      <div class="section-header">
+        أكثر الأصناف مبيعاً
+        <span id="topProductsDate"></span>
+      </div>
+      <div class="bar-list" id="topProductsChart">
+        <div class="state-box"><div class="spinner"></div></div>
+      </div>
+    </div>
+
+    <!-- Invoices Table -->
+    <div class="section">
+      <div class="section-header">
+        سجل الفواتير
+        <div class="sync-row">
+          <div class="sync-dot"></div>
+          <span id="syncTime">—</span>
+        </div>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>الفرع</th>
+              <th>التاريخ</th>
+              <th>الإجمالي</th>
+              <th>الخصم</th>
+              <th>الصافي</th>
+              <th>نوع الأوردر</th>
+              <th>الدفع</th>
+              <th>الكاشير</th>
+              <th>العميل</th>
+            </tr>
+          </thead>
+          <tbody id="invoiceTable">
+            <tr><td colspan="10"><div class="state-box"><div class="spinner"></div></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /app -->
+
+<script>
+// ══════════════════════════════════════════════
+//  CONFIG — عدّل هنا فقط
+// ══════════════════════════════════════════════
+const CONFIG = {
+  SCRIPT_URL: "https://script.google.com/macros/s/AKfycbwGTXcj1vkW_vcWYAiQ9aLIzVgbrHd4Qow56seVf5CUAYcZvOwPqEjQHx2HieoIge-b/exec",
+  USERS: {
+    "admin":  { pass: "admin123",  role: "admin",  label: "المدير" },
+    "owner":  { pass: "owner123",  role: "owner",  label: "صاحب المطعم" },
+    "cashier":{ pass: "cashier123",role: "cashier", label: "الكاشير" }
+  }
+};
+
+// ══════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════
+let state = {
+  user: null,
+  role: null,
+  allInvoices: [],
+  allDetails: [],
+  activeBranch: "all",
+  branches: []
+};
+
+// ══════════════════════════════════════════════
+//  LOGIN
+// ══════════════════════════════════════════════
+function doLogin() {
+  const u = document.getElementById('loginUser').value.trim();
+  const p = document.getElementById('loginPass').value.trim();
+  const err = document.getElementById('loginErr');
+  const btn = document.getElementById('loginBtn');
+
+  err.style.display = 'none';
+
+  const user = CONFIG.USERS[u];
+  if (!user || user.pass !== p) {
+    err.style.display = 'block';
+    return;
+  }
+
+  state.user = u;
+  state.role = user.role;
+  document.getElementById('userBadge').textContent = user.label;
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+
+  setDefaultDates();
+  loadData();
+}
+
+document.getElementById('loginPass').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
+
+function doLogout() {
+  state = { user: null, role: null, allInvoices: [], allDetails: [], activeBranch: 'all', branches: [] };
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('loginUser').value = '';
+  document.getElementById('loginPass').value = '';
+}
+
+// ══════════════════════════════════════════════
+//  DATES
+// ══════════════════════════════════════════════
+function todayStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function setDefaultDates() {
+  const t = todayStr();
+  document.getElementById('dateFrom').value = t;
+  document.getElementById('dateTo').value = t;
+}
+
+function applyQuickRange() {
+  const v = document.getElementById('quickRange').value;
+  if (!v) return;
+  const now = new Date();
+  let from, to = todayStr();
+
+  if (v === 'today') { from = to; }
+  else if (v === 'yesterday') {
+    const y = new Date(now); y.setDate(y.getDate() - 1);
+    from = to = y.toISOString().slice(0, 10);
+  }
+  else if (v === 'week') {
+    const w = new Date(now); w.setDate(w.getDate() - 6);
+    from = w.toISOString().slice(0, 10);
+  }
+  else if (v === 'month') {
+    from = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
+  }
+  else if (v === 'last30') {
+    const d = new Date(now); d.setDate(d.getDate() - 29);
+    from = d.toISOString().slice(0, 10);
+  }
+
+  document.getElementById('dateFrom').value = from;
+  document.getElementById('dateTo').value = to;
+  loadData();
+}
+
+// ══════════════════════════════════════════════
+//  LOAD DATA FROM GOOGLE SHEETS
+// ══════════════════════════════════════════════
+async function loadData() {
+  const from = document.getElementById('dateFrom').value;
+  const to   = document.getElementById('dateTo').value;
+  if (!from || !to) return;
+
+  setLoading(true);
+
+  try {
+    const url = `${https://script.google.com/macros/s/AKfycbxV6iqQ_CxOF9gVqFY3m8KV-bZY_8N66qukcElJwp6ofGlaH0q6b5w7HwtMKWU_3qB3/exec}?action=getReports&from=${from}&to=${to}&t=${Date.now()}`;
+    const res  = await fetch(url);
+    const data = await res.json();
+
+    if (data.error) throw new Error(data.error);
+
+    state.allInvoices = data.invoices || [];
+    state.allDetails  = data.details  || [];
+
+    // Collect branches
+    const bSet = new Set(state.allInvoices.map(r => r.Branch).filter(Boolean));
+    state.branches = [...bSet];
+    renderBranchTabs();
+
+    renderDashboard();
+
+    document.getElementById('syncTime').textContent =
+      'آخر تحديث: ' + new Date().toLocaleTimeString('ar-EG');
+
+  } catch(e) {
+    showError('تعذّر تحميل البيانات. تحقق من الاتصال.');
+    console.error(e);
+  }
+
+  setLoading(false);
+}
+
+// ══════════════════════════════════════════════
+//  BRANCH FILTER
+// ══════════════════════════════════════════════
+function renderBranchTabs() {
+  const el = document.getElementById('branchTabs');
+  if (state.branches.length < 2) { el.innerHTML = ''; return; }
+
+  let html = `<button class="branch-tab ${state.activeBranch==='all'?'active':''}" onclick="setBranch('all')">الكل</button>`;
+  state.branches.forEach(b => {
+    html += `<button class="branch-tab ${state.activeBranch===b?'active':''}" onclick="setBranch('${b}')">${b}</button>`;
+  });
+  el.innerHTML = html;
+}
+
+function setBranch(b) {
+  state.activeBranch = b;
+  renderBranchTabs();
+  renderDashboard();
+}
+
+function filteredInvoices() {
+  if (state.activeBranch === 'all') return state.allInvoices;
+  return state.allInvoices.filter(r => r.Branch === state.activeBranch);
+}
+
+function filteredDetails() {
+  const invNos = new Set(filteredInvoices().map(r => r.InvoiceNo));
+  return state.allDetails.filter(d => invNos.has(d.InvoiceNo));
+}
+
+// ══════════════════════════════════════════════
+//  RENDER DASHBOARD
+// ══════════════════════════════════════════════
+function renderDashboard() {
+  const invs = filteredInvoices();
+  const dets = filteredDetails();
+
+  // KPIs
+  const total  = invs.reduce((s, r) => s + (+r.FinalTotal||0), 0);
+  const disc   = invs.reduce((s, r) => s + (+r.Discount||0), 0);
+  const count  = invs.length;
+  const avg    = count ? total / count : 0;
+
+  document.getElementById('kpiTotal').textContent = fmt(total);
+  document.getElementById('kpiCount').textContent = count;
+  document.getElementById('kpiAvg').textContent   = fmt(avg);
+  document.getElementById('kpiDisc').textContent  = fmt(disc);
+
+  // Payment
+  const cash = invs.filter(r=>r.PaymentMethod==='كاش').reduce((s,r)=>s+(+r.FinalTotal||0),0);
+  const visa = invs.filter(r=>r.PaymentMethod==='فيزا').reduce((s,r)=>s+(+r.FinalTotal||0),0);
+  const voda = invs.filter(r=>r.PaymentMethod==='فودافون كاش').reduce((s,r)=>s+(+r.FinalTotal||0),0);
+  document.getElementById('payCash').textContent = fmt(cash);
+  document.getElementById('payVisa').textContent = fmt(visa);
+  document.getElementById('payVoda').textContent = fmt(voda);
+
+  // Order types bar
+  const otypes = {};
+  invs.forEach(r => { const t = r.OrderType||'غير محدد'; otypes[t]=(otypes[t]||0)+(+r.FinalTotal||0); });
+  renderBarChart('orderTypeChart', otypes, 'جنيه');
+
+  // Top products bar
+  const prods = {};
+  dets.forEach(d => {
+    const n = d.ProductName || 'غير محدد';
+    prods[n] = (prods[n]||0) + (+d.Qty||0);
+  });
+  renderBarChart('topProductsChart', prods, 'وحدة', true);
+
+  // Table
+  renderTable(invs);
+}
+
+function renderBarChart(elId, obj, unit, byQty=false) {
+  const el = document.getElementById(elId);
+  const sorted = Object.entries(obj).sort((a,b)=>b[1]-a[1]).slice(0, 8);
+  if (!sorted.length) { el.innerHTML = '<div class="state-box">لا توجد بيانات</div>'; return; }
+
+  const max = sorted[0][1];
+  el.innerHTML = sorted.map(([k,v]) => `
+    <div class="bar-item">
+      <div class="bar-label" title="${k}">${k}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/max*100)}%"></div></div>
+      <div class="bar-val">${byQty ? Math.round(v) : fmt(v)} ${unit}</div>
+    </div>
+  `).join('');
+}
+
+function renderTable(invs) {
+  const tbody = document.getElementById('invoiceTable');
+  if (!invs.length) {
+    tbody.innerHTML = '<tr><td colspan="10"><div class="state-box"><div class="big">📭</div>لا توجد فواتير في هذه الفترة</div></td></tr>';
+    return;
+  }
+
+  const sorted = [...invs].sort((a,b) => new Date(b.DateTime) - new Date(a.DateTime));
+
+  tbody.innerHTML = sorted.map(r => `
+    <tr>
+      <td style="color:var(--muted);font-size:11px">${r.InvoiceNo}</td>
+      <td>${r.Branch||'—'}</td>
+      <td style="font-size:12px;white-space:nowrap">${fmtDate(r.DateTime)}</td>
+      <td>${fmt(r.Total)}</td>
+      <td style="color:var(--danger)">${r.Discount>0?'-'+fmt(r.Discount):'—'}</td>
+      <td style="font-weight:500">${fmt(r.FinalTotal)}</td>
+      <td>${badgeOrder(r.OrderType)}</td>
+      <td>${badgePay(r.PaymentMethod)}</td>
+      <td style="color:var(--muted)">${r.User||'—'}</td>
+      <td style="font-size:12px">${r.CustomerName||'—'}</td>
+    </tr>
+  `).join('');
+}
+
+// ══════════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════════
+function fmt(n) {
+  return Number(n||0).toLocaleString('ar-EG', {minimumFractionDigits:0, maximumFractionDigits:0});
+}
+
+function fmtDate(s) {
+  if (!s) return '—';
+  try {
+    return new Date(s).toLocaleString('ar-EG', {
+      year:'numeric', month:'2-digit', day:'2-digit',
+      hour:'2-digit', minute:'2-digit'
+    });
+  } catch { return s; }
+}
+
+function badgePay(m) {
+  if (!m) return '—';
+  const cls = m==='كاش'?'badge-cash':m==='فيزا'?'badge-visa':'badge-voda';
+  return `<span class="badge ${cls}">${m}</span>`;
+}
+
+function badgeOrder(t) {
+  if (!t) return '—';
+  const cls = t.includes('ديل')?'badge-delivery':t.includes('تيك')?'badge-takeaway':'badge-dine';
+  return `<span class="badge ${cls}">${t}</span>`;
+}
+
+function setLoading(on) {
+  document.querySelector('.btn-filter').disabled = on;
+  document.querySelector('.btn-filter').textContent = on ? '⏳ جاري التحميل...' : '🔍 عرض التقارير';
+}
+
+function showError(msg) {
+  document.getElementById('invoiceTable').innerHTML =
+    `<tr><td colspan="10"><div class="state-box"><div class="big">⚠️</div>${msg}</div></td></tr>`;
+}
+</script>
+</body>
+</html>
